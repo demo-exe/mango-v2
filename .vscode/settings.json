@@ -3,6 +3,8 @@
         "freertos.h": "c",
         "freertosconfig.h": "c",
         "task.h": "c",
-        "esp_system.h": "c"
+        "esp_system.h": "c",
+        "string.h": "c",
+        "wifi.h": "c"
     }
 }

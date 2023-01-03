@@ -1,11 +1,3 @@
-/* WiFi station Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -24,10 +16,19 @@
 
 // from wifi.c
 void wifiTask(void * pvParameters);
+TaskHandle_t wifiTaskHandle = NULL;
+
+// from pump.c
+void initPump();
+void waterPumpTask(void * pvParameters);
+TaskHandle_t waterPumpTaskHandle = NULL;
+
+// from thingsboard.c
+void thingsboardTask(void * pvParameters);
+TaskHandle_t thingsboardTaskHandle = NULL;
 
 
 static const char *TAG = "main";
-TaskHandle_t wifiTaskHandle = NULL;
 
 
 void debug_tasks()
@@ -47,8 +48,16 @@ void debug_tasks()
 // its a task that runs sytem setup then deletes itself
 void app_main()
 {
+    initPump();
+
     ESP_ERROR_CHECK(nvs_flash_init());
 
-    // run wifi task at priority 1
-    xTaskCreate(wifiTask, "wifi", 4048, NULL, 1, &wifiTaskHandle);
+    // run pump task at priority 14
+    xTaskCreate(waterPumpTask, "pump", 2048, NULL, 14, &waterPumpTaskHandle);
+
+    // run wifi task
+    xTaskCreate(wifiTask, "wifi", 2048, NULL, 2, &wifiTaskHandle);
+
+    // run thingsboard task
+    xTaskCreate(thingsboardTask, "wifi", 2048, NULL, 1, &thingsboardTaskHandle);
 }

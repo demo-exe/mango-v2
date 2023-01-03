@@ -10,28 +10,16 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#include "lwip/err.h"
-#include "lwip/sys.h"
-
-
-
-#define EXAMPLE_ESP_WIFI_SSID      "Pfizer control beacon"
-#define EXAMPLE_ESP_WIFI_PASS      "WZtTdCxYeXFLKuECbn19qsHnp"
-#define EXAMPLE_ESP_MAXIMUM_RETRY  3
-
-/* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t s_wifi_event_group;
-
-/* The event group allows multiple bits for each event, but we only care about two events:
- * - we are connected to the AP with an IP
- * - we failed to connect after the maximum amount of retries */
-#define WIFI_DISCONNECTED_BIT BIT0
+#include "wifi.h"
 
 
 static const char *TAG = "wifi";
 
+EventGroupHandle_t s_wifi_event_group;
+
 // from main.c
 void debug_tasks();
+
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -40,10 +28,12 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECTED_BIT);
+        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip:%s", ip4addr_ntoa(&event->ip_info.ip));
         xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECTED_BIT);
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -84,11 +74,12 @@ void wifi_init_sta(void)
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 }
 
+
 void wifiTask( void * pvParameters )
 {
     wifi_init_sta();
 
-    for( ;; )
+    while(true)
     {
         EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_DISCONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
         if (bits & WIFI_DISCONNECTED_BIT)
