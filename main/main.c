@@ -22,33 +22,33 @@
 #include "lwip/sys.h"
 
 
-
+// from wifi.c
+void wifiTask(void * pvParameters);
 
 
 static const char *TAG = "main";
+TaskHandle_t wifiTaskHandle = NULL;
 
-static int s_retry_num = 0;
 
 void debug_tasks()
 {
     char buffer[2048];
     vTaskList(buffer);
     ESP_LOGI(TAG,
-    "\n**********************************\n"
+    "\n***********************************************\n"
     "Task           	State   Prio    Stack    Num\n"
-    "**********************************\n"
+    "***********************************************\n"
     "%s\n"
-    "**********************************",
+    "***********************************************\n",
     buffer);
 }
 
-
+// this task runs at priority 1
+// its a task that runs sytem setup then deletes itself
 void app_main()
 {
-    debug_tasks();
     ESP_ERROR_CHECK(nvs_flash_init());
 
-    debug_tasks();
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
+    // run wifi task at priority 1
+    xTaskCreate(wifiTask, "wifi", 4048, NULL, 1, &wifiTaskHandle);
 }
