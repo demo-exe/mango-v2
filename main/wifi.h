@@ -14,4 +14,7 @@ extern EventGroupHandle_t s_wifi_event_group;
 #define WIFI_DISCONNECTED_BIT BIT0
 #define WIFI_CONNECTED_BIT BIT1
 
+
+void wifiTask(void * pvParameters);
+
 #endif // WIFI_H_

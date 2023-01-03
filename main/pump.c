@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 
+#include "pump.h"
 
 
 static const char *TAG = "pump";
@@ -31,6 +32,19 @@ void initPump()
 
     gpio_set_level(PUMP_PIN, 0);
 }
+
+
+
+unsigned int getPumpingTimeMs()
+{
+    return 2137;
+}
+void setPumpingTimeMs(unsigned int ms)
+{
+    
+}
+
+
 
 
 // most important task at priority 14 because it might flood the room if it fails.

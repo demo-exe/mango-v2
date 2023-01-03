@@ -5,6 +5,10 @@
         "task.h": "c",
         "esp_system.h": "c",
         "string.h": "c",
-        "wifi.h": "c"
+        "wifi.h": "c",
+        "thingsboard.h": "c",
+        "string": "c",
+        "pump.h": "c",
+        "cstdio": "c"
     }
 }

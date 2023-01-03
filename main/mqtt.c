@@ -17,6 +17,7 @@
 
 #include "wifi.h"
 #include "thingsboard.h"
+#include "cJSON.h"
 
 static const char *TAG = "mqtt";
 
@@ -26,7 +27,7 @@ EventGroupHandle_t mqtt_event_group;
 #define MQTT_CONNECTED_BIT BIT0
 
 // handle to mqtt client
-esp_mqtt_client_handle_t client;
+esp_mqtt_client_handle_t mqtt_client;
 
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
@@ -60,8 +61,20 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            printf("DATA=%.*s\r\n", event->data_len, event->data);
+
+            cJSON *json = cJSON_ParseWithLength(event->data, event->data_len);
+            cJSON *name = cJSON_GetObjectItemCaseSensitive(json, "method");
+            if (cJSON_IsString(name) && (name->valuestring != NULL))
+            {
+                int request;
+                sscanf (event->topic, RPC_REQ_FMT, &request);
+
+                char response[512];
+                snprintf(response, 512, RPC_RES_FMT, request);
+
+                handle_request(name->valuestring, response);
+            }
+
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -80,7 +93,7 @@ void mqtt_app_start(void)
         .username = TOKEN,
     };
 
-    client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
-    esp_mqtt_client_start(client);
+    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, mqtt_client);
+    esp_mqtt_client_start(mqtt_client);
 }

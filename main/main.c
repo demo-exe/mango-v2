@@ -13,18 +13,19 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "pump.h"
+#include "wifi.h"
+#include "thingsboard.h"
+
+
 
 // from wifi.c
-void wifiTask(void * pvParameters);
 TaskHandle_t wifiTaskHandle = NULL;
 
 // from pump.c
-void initPump();
-void waterPumpTask(void * pvParameters);
 TaskHandle_t waterPumpTaskHandle = NULL;
 
 // from thingsboard.c
-void thingsboardTask(void * pvParameters);
 TaskHandle_t thingsboardTaskHandle = NULL;
 
 
@@ -59,5 +60,5 @@ void app_main()
     xTaskCreate(wifiTask, "wifi", 2048, NULL, 2, &wifiTaskHandle);
 
     // run thingsboard task
-    xTaskCreate(thingsboardTask, "wifi", 2048, NULL, 1, &thingsboardTaskHandle);
+    xTaskCreate(thingsboardTask, "tb", 4096, NULL, 1, &thingsboardTaskHandle);
 }
