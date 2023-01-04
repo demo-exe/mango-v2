@@ -16,6 +16,7 @@
 #include "pump.h"
 #include "wifi.h"
 #include "thingsboard.h"
+#include "nvs.h"
 
 
 
@@ -51,7 +52,7 @@ void app_main()
 {
     initPump();
 
-    ESP_ERROR_CHECK(nvs_flash_init());
+    initNVS();
 
     // run pump task at priority 14
     xTaskCreate(waterPumpTask, "pump", 2048, NULL, 14, &waterPumpTaskHandle);
@@ -60,5 +61,5 @@ void app_main()
     xTaskCreate(wifiTask, "wifi", 2048, NULL, 2, &wifiTaskHandle);
 
     // run thingsboard task
-    xTaskCreate(thingsboardTask, "tb", 4096, NULL, 1, &thingsboardTaskHandle);
+    xTaskCreate(thingsboardTask, "tb", 7000, NULL, 1, &thingsboardTaskHandle);
 }

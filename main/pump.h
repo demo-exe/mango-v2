@@ -5,8 +5,7 @@
 void initPump();
 void waterPumpTask( void * pvParameters );
 
-unsigned int getPumpingTimeMs();
-void setPumpingTimeMs(unsigned int ms);
+void waterNow();
 
 
 #endif // PUMP_H_

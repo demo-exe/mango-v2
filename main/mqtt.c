@@ -62,18 +62,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
 
-            cJSON *json = cJSON_ParseWithLength(event->data, event->data_len);
-            cJSON *name = cJSON_GetObjectItemCaseSensitive(json, "method");
-            if (cJSON_IsString(name) && (name->valuestring != NULL))
-            {
-                int request;
-                sscanf (event->topic, RPC_REQ_FMT, &request);
+            int request;
+            sscanf (event->topic, RPC_REQ_FMT, &request);
 
-                char response[512];
-                snprintf(response, 512, RPC_RES_FMT, request);
+            char response[512];
+            snprintf(response, 512, RPC_RES_FMT, request);
 
-                handle_request(name->valuestring, response);
-            }
+            handle_request(event->data, response);
 
             break;
         case MQTT_EVENT_ERROR:

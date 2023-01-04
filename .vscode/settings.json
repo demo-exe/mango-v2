@@ -9,6 +9,9 @@
         "thingsboard.h": "c",
         "string": "c",
         "pump.h": "c",
-        "cstdio": "c"
+        "cstdio": "c",
+        "*.inc": "c",
+        "nvs.h": "c",
+        "dht.h": "c"
     }
 }

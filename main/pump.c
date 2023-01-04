@@ -1,16 +1,22 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
 
 #include "pump.h"
+#include "nvs.h"
 
 
 static const char *TAG = "pump";
 
-#define PUMP_PIN 2 //D4
+#define PUMP_PIN 5 //D1
+//#define PUMP_PIN 2 //D4
+
+EventGroupHandle_t pump_event;
+#define START_PUMP_REQ BIT0
 
 
 void initPump()
@@ -30,32 +36,34 @@ void initPump()
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
+    // initally turn pump off
     gpio_set_level(PUMP_PIN, 0);
 }
 
 
-
-unsigned int getPumpingTimeMs()
+void waterNow()
 {
-    return 2137;
+    xEventGroupSetBits(pump_event, START_PUMP_REQ);
 }
-void setPumpingTimeMs(unsigned int ms)
-{
-    
-}
-
-
-
 
 // most important task at priority 14 because it might flood the room if it fails.
 // should not block for a long time because it will interfere with wifi task at prio 13
 void waterPumpTask( void * pvParameters )
 {
-    int cnt = 0;
+    pump_event = xEventGroupCreate();
+
+
     while(1) {
-        cnt++;
-        gpio_set_level(PUMP_PIN, cnt % 2);
-        //ESP_LOGI(TAG, "pump task 1s");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        EventBits_t bits = xEventGroupWaitBits(pump_event, START_PUMP_REQ, pdTRUE, pdFALSE, portMAX_DELAY);
+        if (bits & START_PUMP_REQ)
+        {
+            ESP_LOGW(TAG, "Watering now for %dms!", getPumpingTimeMs());
+            gpio_set_level(PUMP_PIN, 1);
+
+            vTaskDelay(getPumpingTimeMs() / portTICK_PERIOD_MS);
+
+            gpio_set_level(PUMP_PIN, 0);
+            ESP_LOGW(TAG, "Watering finished!");
+        }
     }
 }

@@ -16,10 +16,13 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#include <dht.h>
+
 #include "wifi.h"
 #include "thingsboard.h"
 #include "cJSON.h"
 #include "pump.h"
+#include "nvs.h"
 
 static const char *TAG = "thingsboard";
 
@@ -34,23 +37,30 @@ void mqtt_app_start(void);
 extern esp_mqtt_client_handle_t mqtt_client;
 
 
-void handle_request(const char * method, const char * response_topic)
+void handle_request(const char * data, const char * response_topic)
 {
-    ESP_LOGI(TAG, "method: %s, response: %s", method, response_topic);
-    if(!strcmp(method, "getValue"))
-    {
-        // %f format is not included to keep the sdk small
-        double ms = getPumpingTimeMs();
-        int before = (int)floor(ms / 1000);
-        int after = (int)round(ms / 10) % 100;
+    cJSON *json = cJSON_Parse(data);
+    cJSON *method = cJSON_GetObjectItemCaseSensitive(json, "method");
+    if (!(cJSON_IsString(method) && (method->valuestring != NULL)))
+        return;
 
+    if(!strcmp(method->valuestring, "getValue"))
+    {
         char number[10];        
-        int len = snprintf(number,  10,  "%d.%02d", before, after);
+        int len = snprintf(number,  10,  "%.2f", getPumpingTimeMs() / 1000.);
         esp_mqtt_client_publish(mqtt_client, response_topic, number, len, 1, 0);
     }
-    else if (!strcmp(method, "waterNow"))
+    else if (!strcmp(method->valuestring, "setValue"))
     {
-
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(json, "params");
+        if(cJSON_IsNumber(value))
+        {
+            setPumpingTimeMs(value->valuedouble* 1000);
+        }
+    }
+    else if (!strcmp(method->valuestring, "waterNow"))
+    {
+        waterNow();
     }
 }
 
@@ -68,26 +78,37 @@ void thingsboardTask(void * pvParameters)
             break;
         }
     }
-   
-
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    
     // periodically send telemetry data
     TickType_t xLastWakeTime = xTaskGetTickCount();
     while(true)
     {
+        float temperature, humidity;
+        gpio_set_pull_mode(2, GPIO_PULLUP_ONLY);
+
+        if (dht_read_float_data(DHT_TYPE_AM2301, 2, &humidity, &temperature) == ESP_OK)
+            printf("Humidity: %.1f%% Temp: %.1fC\n", humidity, temperature);
+        else
+            printf("Could not read data from sensor\n");
+
+        // If you read the sensor data too often, it will heat up
+        // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
+        vTaskDelay(pdMS_TO_TICKS(2000));
 
         cJSON *telemetry = cJSON_CreateObject();
 
-        if (cJSON_AddNumberToObject(telemetry, "Humidity", 21) == NULL)
+        if (cJSON_AddNumberToObject(telemetry, "Humidity", humidity) == NULL)
         {
             goto end;
         }
-        if (cJSON_AddNumberToObject(telemetry, "Temperature", 37) == NULL)
+        if (cJSON_AddNumberToObject(telemetry, "Temperature", temperature) == NULL)
         {
             goto end;
         }
 
 
-        char * string = cJSON_Print(telemetry);
+        char * string = cJSON_PrintUnformatted(telemetry);
         if (string != NULL)
         {
             ESP_LOGI(TAG, "Publishing telemetry: %s", string);
@@ -100,4 +121,6 @@ void thingsboardTask(void * pvParameters)
         // execute every 10s
         vTaskDelayUntil( &xLastWakeTime, 10000 / portTICK_PERIOD_MS );
     }
+    
+    vTaskSuspend(NULL);
 }

@@ -4,12 +4,17 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../**"
+                "${workspaceFolder}/third_party/**"
             ],
             "defines": [
-                "__ESP_FILE__"
+                "__ESP_FILE__",
+                "CONFIG_FREERTOS_HZ",
+                "CONFIG_ESP8266_WIFI_RX_BUFFER_NUM",
+                "CONFIG_ESP8266_WIFI_RX_PKT_NUM",
+                "CONFIG_ESP8266_WIFI_LEFT_CONTINUOUS_RX_BUFFER_NUM",
+                "CONFIG_ESP8266_WIFI_TX_PKT_NUM"
             ],
-            "compilerPath": "/home/mzyla/Work/mangov2/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
+            "compilerPath": "${workspaceFolder}/third_party/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
             "cStandard": "c11",
             "cppStandard": "c++14",
             "intelliSenseMode": "linux-clang-x64"

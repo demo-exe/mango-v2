@@ -14,7 +14,7 @@
 
 void thingsboardTask(void * pvParameters);
 
-void handle_request(const char * method, const char * response_topic);
+void handle_request(const char * data, const char * response_topic);
 
 
 #endif // THINGSBOARD_H_
