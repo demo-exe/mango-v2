@@ -1,8 +1,9 @@
 #ifndef WIFI_H_
 #define WIFI_H_
 
-#define EXAMPLE_ESP_WIFI_SSID      "Pfizer control beacon"
-#define EXAMPLE_ESP_WIFI_PASS      "WZtTdCxYeXFLKuECbn19qsHnp"
+#include "wifi_pass.h"
+// #define EXAMPLE_ESP_WIFI_SSID      "Pfizer control beacon"
+// #define EXAMPLE_ESP_WIFI_PASS      "WZtTdCxYeXFLKuECbn19qsHnp"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  3
 
 /* FreeRTOS event group to signal when we are connected*/
